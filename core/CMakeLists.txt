@@ -7,14 +7,13 @@ add_library(core SHARED
     cli.cpp
 )
 
-target_include_directories(core
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Экспорт символов из DLL на Windows
 if (WIN32)
-    target_compile_definitions(core PRIVATE CORE_EXPORTS)
+    target_compile_definitions(core PRIVATE CORE_EXPORTS=1)
 endif()
 
-if (UNIX)
-    target_link_libraries(core pthread)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(core PUBLIC pthread)
 endif()

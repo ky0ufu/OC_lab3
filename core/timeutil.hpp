@@ -5,3 +5,4 @@
 
 CORE_API std::string now();
 CORE_API uint64_t pid();
+CORE_API std::string self_path();
