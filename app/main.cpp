@@ -10,13 +10,6 @@
 #include <chrono>
 #include <string>
 
-/*
-    Обработка завершения по Ctrl+C.
-
-    - корректно остановить все рабочие потоки
-    - не рвать shared memory в произвольном состоянии
-    - дать дочерним потокам завершиться
-*/
 
 #ifdef _WIN32
 #include <windows.h>
@@ -58,10 +51,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    /*
-        Проверяем, не запущены ли мы в режиме дочерней копии.
-        - просто выполняем нужное действие и выходим
-    */
+    // Проверяем, не запущены ли мы в режиме дочерней копии.
     if (argc >= 2) {
         std::string mode = argv[1];
         if (mode == "child_add10") return run_child_add10();
@@ -79,7 +69,7 @@ int main(int argc, char** argv)
 
         Остальные процессы:
         - только увеличивают счётчик
-        - принимают CLI-команды
+        - принимают CLI команды
     */
     bool is_master = ac_master();
 
@@ -87,7 +77,7 @@ int main(int argc, char** argv)
     std::atomic<bool> running{true};
     g_running_ptr = &running;
 
-    // Регистрируем обработчики Ctrl+C / SIGINT
+    
 #ifdef _WIN32
     SetConsoleCtrlHandler(console_handler, TRUE);
 #else

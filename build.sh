@@ -8,4 +8,4 @@ cd ${BUILD_DIR}
 
 cmake ..
 
-cmake --build . -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+cmake --build .
