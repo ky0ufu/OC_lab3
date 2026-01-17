@@ -20,7 +20,7 @@ static const uint32_t SHM_MAGIC = 0xC0FFEE11;
 SharedData* shared = nullptr;
 
 #ifdef _WIN32
-// именованные объекты
+
 static const char* SHM_NAME = "Local\\global_counter_shm";
 static const char* MUTEX_NAME = "Local\\global_counter_mutex";
 static const char* INIT_MUTEX_NAME = "Local\\global_counter_init_mutex";
@@ -57,14 +57,12 @@ static pthread_mutex_t* g_counter_mutex = nullptr; // указатель на mu
     Инициализация shared memory.
 
     Вызывается каждым процессом при старте.
+    Нужен, чтобы несколько процессов
+    не инициализировали shared memory одновременно.
 */
 void init_shared()
 {
 #ifdef _WIN32
-    /*
-        init mutex нужен, чтобы несколько процессов
-        не инициализировали shared memory одновременно.
-    */
     if (!g_init_mutex) g_init_mutex = CreateMutexA(nullptr, FALSE, INIT_MUTEX_NAME);
     if (!g_init_mutex) {
         log_line(now() + " PID=" + std::to_string(pid()) + " init_shared: CreateMutex(init) failed: " + win_err());
@@ -90,9 +88,7 @@ void init_shared()
         return;
     }
 
-    /*
-        Отображаем shared memory в адресное пространство процесса.
-    */
+    // Отображаем shared memory в адресное пространство процесса.
 
     void* p = MapViewOfFile(g_map, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(SharedData));
     if (!p) {
@@ -103,9 +99,8 @@ void init_shared()
 
     shared = static_cast<SharedData*>(p);
 
-    /*
-        Mutex для защиты операций со счётчиком.
-    */
+    // Mutex для защиты операций со счётчиком.
+
     if (!g_counter_mutex) g_counter_mutex = CreateMutexA(nullptr, FALSE, MUTEX_NAME);
     if (!g_counter_mutex) {
         log_line(now() + " PID=" + std::to_string(pid()) + " init_shared: CreateMutex(counter) failed: " + win_err());
@@ -113,10 +108,9 @@ void init_shared()
         return;
     }
 
-     /*
-        Если magic не совпадает — значит:
-        - это первый процесс
-    */
+
+    // Если magic не совпадает — значит: - это первый процесс
+
     uint32_t m = shared->magic.load(std::memory_order_acquire);
     if (m != SHM_MAGIC) {
         shared->counter.store(0, std::memory_order_relaxed);
@@ -129,10 +123,9 @@ void init_shared()
 
 #else // POSIX
 
-    /*
-        Пытаемся создать shared memory эксклюзивно.
-        Если удалось — первый процесс.
-    */
+    // Пытаемся создать shared memory эксклюзивно.
+    // Если удалось — первый процесс.
+
     bool created = false;
 
     int fd = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, 0666);
@@ -157,10 +150,9 @@ void init_shared()
     // Mutex лежит сразу после структуры SharedData в shared memory.
     g_counter_mutex = reinterpret_cast<pthread_mutex_t*>((char*)mem + sizeof(SharedData));
 
-    /*
-        Только первый процесс инициализирует структуру
-        и mutex с атрибутом PTHREAD_PROCESS_SHARED.
-    */
+    // Только первый процесс инициализирует структуру
+    // и mutex с атрибутом PTHREAD_PROCESS_SHARED.
+
     if (created) {
         shared->magic.store(SHM_MAGIC, std::memory_order_relaxed);
         shared->counter.store(0, std::memory_order_relaxed);

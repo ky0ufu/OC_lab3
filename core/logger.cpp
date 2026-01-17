@@ -17,7 +17,6 @@ static HANDLE g_log_mutex = nullptr;
 static void ensure_log_mutex()
 {
     if (!g_log_mutex) {
-        // Local\\ вместо Global\\
         g_log_mutex = CreateMutexA(nullptr, FALSE, "Local\\program_log_mutex");
     }
 }
