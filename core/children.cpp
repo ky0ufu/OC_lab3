@@ -107,7 +107,7 @@ static bool spawn_one(const std::string& arg)
 {
 #ifdef _WIN32
     /*
-        Используем CreateProcess.
+        Используем CreateProcessA.
         Передаём аргумент:
             program.exe child_add10
             program.exe child_mul2
@@ -120,9 +120,14 @@ static bool spawn_one(const std::string& arg)
 
     // CreateProcess требует изменяемый buffer
     std::string mutable_cmd = cmd;
-    BOOL ok = CreateProcessA(nullptr, mutable_cmd.data(),
-                            nullptr, nullptr, FALSE,
-                            0, nullptr, nullptr, &si, &pi);
+    BOOL ok = CreateProcessA(
+        nullptr, 
+        mutable_cmd.data(),                      
+        nullptr, nullptr, 
+        FALSE,
+        0, 
+        nullptr, nullptr, 
+        &si, &pi);
 
     if (ok) {
         CloseHandle(pi.hThread);
